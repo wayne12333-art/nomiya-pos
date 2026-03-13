@@ -1,0 +1,2 @@
+ALTER TABLE "OrderItem"
+ADD COLUMN "deliveredQty" INTEGER NOT NULL DEFAULT 0;

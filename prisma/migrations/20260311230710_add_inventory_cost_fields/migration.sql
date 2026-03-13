@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "InventoryItem" ADD COLUMN     "avgCostPerMl" DOUBLE PRECISION DEFAULT 0,
+ADD COLUMN     "latestCostPerMl" DOUBLE PRECISION DEFAULT 0;

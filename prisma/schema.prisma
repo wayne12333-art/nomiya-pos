@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id                  String           @id @default(cuid())
+  name                String
+  category            String
+  productType         String
+  inventoryMode       String
+  imageUrl            String?
+  description         String?
+  isAlcohol           Boolean          @default(false)
+  isRecipe            Boolean          @default(false)
+  isMerchandise       Boolean          @default(false)
+  isWholeBottleSale   Boolean          @default(false)
+  saleStatus          Boolean          @default(true)
+  portionMl           Int?
+  estimatedServings   Int?
+  totalVolumeMl       Int?
+  totalWeightG        Int?
+  purchasePrice       Int?
+  salePrice           Int?
+  strongSurcharge     Int?
+  specialSurcharge    Int?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  inventoryItems      InventoryItem?
+  openedBottles       OpenedBottle[]
+  orderItems          OrderItem[]
+  variants            ProductVariant[]
+  purchaseItems       PurchaseItem[]
+  recipesAsIngredient Recipe[]         @relation("IngredientProduct")
+  recipesAsSale       Recipe[]         @relation("SaleProduct")
+  stocktakes          Stocktake[]
+}
+
+model ProductVariant {
+  id                 String   @id @default(cuid())
+  productId          String
+  name               String
+  price              Int
+  volumeMl           Int?
+  weightG            Int?
+  useRecipeDeduction Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Recipe {
+  id                  String   @id @default(cuid())
+  saleProductId       String
+  ingredientProductId String
+  amount              Float?
+  unitType            String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  ingredientProduct   Product  @relation("IngredientProduct", fields: [ingredientProductId], references: [id], onDelete: Cascade)
+  saleProduct         Product  @relation("SaleProduct", fields: [saleProductId], references: [id], onDelete: Cascade)
+}
+
+model InventoryItem {
+  id                     String   @id @default(cuid())
+  productId              String   @unique
+  unopenedBottleQty      Int?     @default(0)
+  openedBottleQty        Int?     @default(0)
+  theoreticalRemainingMl Int?     @default(0)
+  actualRemainingMl      Int?     @default(0)
+  theoreticalRemainingG  Int?     @default(0)
+  actualRemainingG       Int?     @default(0)
+  theoreticalQty         Int?     @default(0)
+  actualQty              Int?     @default(0)
+  lowStockThresholdMl    Int?     @default(0)
+  lowStockThresholdG     Int?     @default(0)
+  lowStockThresholdQty   Int?     @default(0)
+  latestCostPerMl        Float?   @default(0)
+  avgCostPerMl           Float?   @default(0)
+  latestCostPerG         Float?   @default(0)
+  avgCostPerG            Float?   @default(0)
+  latestCostPerQty       Float?   @default(0)
+  avgCostPerQty          Float?   @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  product                Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model OpenedBottle {
+  id          String   @id @default(cuid())
+  productId   String
+  openedAt    DateTime @default(now())
+  remainingMl Int?
+  note        String?
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Purchase {
+  id           String         @id @default(cuid())
+  supplierName String?
+  totalAmount  Int
+  note         String?
+  purchaseDate DateTime       @default(now())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  items        PurchaseItem[]
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+  productId  String
+  volumeMl   Int?
+  weightG    Int?
+  qty        Int
+  unitCost   Int
+  totalCost  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id])
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+}
+
+model Stocktake {
+  id             String   @id @default(cuid())
+  productId      String
+  varianceCategory String?
+  theoreticalMl  Int?
+  actualMl       Int?
+  varianceMl     Int?
+  theoreticalG   Int?
+  actualG        Int?
+  varianceG      Int?
+  theoreticalQty Int?
+  actualQty      Int?
+  varianceQty    Int?
+  varianceReason String?
+  countedAt      DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id          String    @id @default(cuid())
+  name        String
+  note        String?
+  visitCount  Int       @default(0)
+  totalSpent  Int       @default(0)
+  lastVisitAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orders      Order[]
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  customerId     String?
+  customerName   String?
+  subtotal       Int
+  discountAmount Int         @default(0)
+  adjustmentAmount Int       @default(0)
+  totalAmount    Int
+  paymentMethod  String
+  paymentStatus  String      @default("open")
+  serviceMode    String      @default("內用")
+  note           String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  closedAt       DateTime?
+  servedAt       DateTime?
+  customer       Customer?   @relation(fields: [customerId], references: [id])
+  items          OrderItem[]
+}
+
+model OrderItem {
+  id                  String   @id @default(cuid())
+  orderId             String
+  productId           String
+  variantId           String?
+  itemNameSnapshot    String
+  variantNameSnapshot String?
+  qty                 Int
+  unitPrice           Int
+  lineTotal           Int
+  deliveredQty        Int      @default(0)
+  recipeCostSnapshot  Float?
+  itemStatus          String   @default("active")
+  cancelReason        String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product             Product  @relation(fields: [productId], references: [id])
+}
+
+model Staff {
+  id        String     @id @default(cuid())
+  name      String
+  role      String?
+  note      String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  schedules Schedule[]
+}
+
+model Schedule {
+  id        String   @id @default(cuid())
+  staffId   String
+  workDate  DateTime
+  startTime String?
+  endTime   String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}

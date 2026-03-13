@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "OrderItem" ALTER COLUMN "recipeCostSnapshot" SET DATA TYPE DOUBLE PRECISION;

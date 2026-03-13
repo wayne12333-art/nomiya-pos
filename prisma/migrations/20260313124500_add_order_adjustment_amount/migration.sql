@@ -1,0 +1,2 @@
+ALTER TABLE "Order"
+ADD COLUMN "adjustmentAmount" INTEGER NOT NULL DEFAULT 0;

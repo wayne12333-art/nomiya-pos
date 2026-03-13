@@ -1,0 +1,2 @@
+ALTER TABLE "Order"
+ADD COLUMN "serviceMode" TEXT NOT NULL DEFAULT '內用';
